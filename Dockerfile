@@ -20,4 +20,4 @@ RUN pip install .
 # Download the weights at build time so workers don't fetch them on every cold start.
 RUN python -c "import esm, os; esm.pretrained.load_model_and_alphabet(os.environ['ESM_MODEL'])"
 
-CMD ["python", "-u", "runpod_handler.py"]
+CMD ["python", "-u", "handler.py"]
