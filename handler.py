@@ -1,4 +1,5 @@
-# RunPod Serverless handler for ESM-2.
+# RunPod Serverless handler for ESM-2 (queue-based endpoints).
+# For load-balancing endpoints, see server.py, which reuses predict() below.
 #
 # Example job input:
 # {
@@ -25,8 +26,7 @@ model = model.eval().to(DEVICE)
 batch_converter = alphabet.get_batch_converter()
 
 
-def handler(job):
-    job_input = job["input"]
+def predict(job_input):
     raw = job_input.get("sequences")
     if not raw:
         return {"error": "'sequences' must be a non-empty list"}
@@ -63,4 +63,9 @@ def handler(job):
     return {"model": MODEL_NAME, "results": results}
 
 
-runpod.serverless.start({"handler": handler})
+def handler(job):
+    return predict(job["input"])
+
+
+if __name__ == "__main__":
+    runpod.serverless.start({"handler": handler})

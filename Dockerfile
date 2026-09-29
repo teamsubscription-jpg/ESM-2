@@ -12,7 +12,11 @@ ENV ESM_MODEL=${ESM_MODEL}
 
 WORKDIR /app
 
-RUN pip install runpod
+# "queue" (default) runs handler.py for queue-based endpoints;
+# "lb" runs server.py (with /ping) for load-balancing endpoints.
+ENV ENDPOINT_TYPE=queue
+
+RUN pip install runpod fastapi "uvicorn[standard]"
 
 COPY . /app
 RUN pip install .
@@ -20,4 +24,10 @@ RUN pip install .
 # Download the weights at build time so workers don't fetch them on every cold start.
 RUN python -c "import esm, os; esm.pretrained.load_model_and_alphabet(os.environ['ESM_MODEL'])"
 
-CMD ["python", "-u", "handler.py"]
+EXPOSE 80
+
+CMD if [ "$ENDPOINT_TYPE" = "lb" ]; then \
+        exec uvicorn server:app --host 0.0.0.0 --port "${PORT:-80}"; \
+    else \
+        exec python -u handler.py; \
+    fi
